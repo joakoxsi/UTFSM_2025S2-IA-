@@ -84,8 +84,6 @@ Instancia cargaInstancia(string nombre){
                 fila++; 
             }
             break;
-
-
         case 5:
             ss.clear(); 
             ss.str(linea);    
@@ -123,6 +121,13 @@ Instancia cargaInstancia(string nombre){
 
 
 
+
+int FuncionEvalucion(){
+    return 1;
+};
+
+
+vector 
 
 int main(){
     cout << "Hello Word" << " \n";
