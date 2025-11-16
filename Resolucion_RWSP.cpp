@@ -28,6 +28,7 @@ struct Instancia {
 };
 
 
+
 Instancia cargaInstancia(string nombre){
     ifstream archivo_instancia(nombre);
     string linea;
@@ -120,6 +121,28 @@ Instancia cargaInstancia(string nombre){
     }
     return instancia;
 };
+
+
+
+// FUNCIONES AUXILIARES
+
+bool esLibre(const string& turno) {
+    return turno == "-"; 
+}
+
+vector<vector<string>> parsearL2strings(const Instancia& inst) {
+    vector<vector<string>> FS2(inst.cantL2);
+
+    for (int idx = 0; idx < inst.cantL2; ++idx) {
+        string linea = inst.L2[idx][0];
+        stringstream ss(linea);
+        string token;
+        while (ss >> token) {
+            FS2[idx].push_back(token);
+        }
+    }
+    return FS2;
+}
 
 
 
