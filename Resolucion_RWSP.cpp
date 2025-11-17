@@ -368,19 +368,15 @@ void SolucionInicial(const Instancia& inst,vector<vector<string>>& solucion,unsi
     int W = inst.W;
     int A = inst.A;
 
-    // Inicializar todo como libre "-"
     solucion.assign(N, vector<string>(W, "-"));
 
-    // Armar lista de nombres de turnos (trabajados)
     vector<string> nombresTurnos;
     nombresTurnos.reserve(A + 1);
     for (const auto& t : inst.Turno) {
         nombresTurnos.push_back(t.nombre);
     }
-    // añadimos explícitamente el turno libre
     nombresTurnos.push_back("-");
 
-    // RNG con la semilla entregada
     mt19937 rng(semilla);
     uniform_int_distribution<int> distTurno(0, (int)nombresTurnos.size() - 1);
 
@@ -394,9 +390,7 @@ void SolucionInicial(const Instancia& inst,vector<vector<string>>& solucion,unsi
 }
 
 
-void generarVecino(const Instancia& inst,
-                   vector<vector<string>>& sol,
-                   mt19937& rng)
+void generarVecino(const Instancia& inst,vector<vector<string>>& sol, mt19937& rng)
 {
     int N = inst.N;
     int W = inst.W;
@@ -557,18 +551,12 @@ void mostrarSolucion(const vector<vector<string>>& solucion, Instancia insta) {
 }
 
 
-void escribirSalida(const vector<vector<string>>& solucion,
-                    const Instancia& inst,
-                    const string& nombreInstancia,
-                    unsigned int semilla)
-{
+void escribirSalida(const vector<vector<string>>& solucion,const Instancia& inst,const string& nombreInstancia,unsigned int semilla){
     fs::path p(nombreInstancia);
     string base = p.stem().string();   // ej: "N10-10"
 
-    // nombre: <nombre_instancia>_<seed>.txt
     string nombreSalida = base + "_" + to_string(semilla) + ".txt";
 
-    // carpeta Resultados (en el directorio actual)
     fs::path carpetaResultados = fs::path("Resultados");
     if (!fs::exists(carpetaResultados)) {
         fs::create_directories(carpetaResultados);
@@ -582,15 +570,13 @@ void escribirSalida(const vector<vector<string>>& solucion,
              << rutaSalida << "\n";
         return;
     }
-
+    
     int N = inst.N;
     int W = inst.W;
 
-    // 1) primera línea: cantidad de fines de semana libres
     int finesLibres = contarFinesDeSemanaLibres(solucion, inst);
     out << finesLibres << "\n";
 
-    // 2) matriz N×W, turnos separados por espacio
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < W; ++j) {
             out << solucion[i][j];
