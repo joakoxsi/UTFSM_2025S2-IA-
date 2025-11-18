@@ -89,8 +89,6 @@ Instancia cargaInstancia(string nombre){
                 fila++; 
             }
             break;
-
-
         case 5:
             ss.clear(); 
             ss.str(linea);    
@@ -109,7 +107,6 @@ Instancia cargaInstancia(string nombre){
             instancia.L3.resize(instancia.cantL3);
             break;
         case 8:
-
             if (fila < instancia.cantL2){
                 instancia.L2[fila].push_back (linea);
             }
@@ -121,7 +118,6 @@ Instancia cargaInstancia(string nombre){
         default:
             break;
         }
-    
     }
     return instancia;
 };
@@ -380,7 +376,6 @@ void SolucionInicial(const Instancia& inst,vector<vector<string>>& solucion,unsi
     mt19937 rng(semilla);
     uniform_int_distribution<int> distTurno(0, (int)nombresTurnos.size() - 1);
 
-    // Rellenar aleatoriamente
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < W; ++j) {
             int k = distTurno(rng);
@@ -395,18 +390,14 @@ void generarVecino(const Instancia& inst,vector<vector<string>>& sol, mt19937& r
     int N = inst.N;
     int W = inst.W;
 
-    if (N < 2) return; // con menos de 2 trabajadores no tiene sentido el swap
-
-    // Distribuciones para elegir día y trabajadores
+    if (N < 2) return; 
     uniform_int_distribution<int> distDia(0, W - 1);
     uniform_int_distribution<int> distTrab(0, N - 1);
 
-    int j = distDia(rng);   // día que vamos a modificar
-
+    int j = distDia(rng);  
     int i1 = distTrab(rng);
     int i2 = distTrab(rng);
 
-    // asegurar que i1 != i2
     int intentos = 0;
     while (i2 == i1 && intentos < 10) {
         i2 = distTrab(rng);
@@ -414,17 +405,12 @@ void generarVecino(const Instancia& inst,vector<vector<string>>& sol, mt19937& r
     }
     if (i1 == i2) return; // no se pudo elegir dos distintos, salimos
 
-    // si los turnos son iguales, el swap no hace nada: intentamos otro día/pareja
-    // (opcional, pero ayuda a que el movimiento cambie algo)
     if (sol[i1][j] == sol[i2][j]) {
-        // intentamos una sola vez más en otro día
         j = distDia(rng);
         if (sol[i1][j] == sol[i2][j]) {
             return; // mala suerte, no cambiamos nada
         }
     }
-
-    // Swap de los turnos en el día j
     std::swap(sol[i1][j], sol[i2][j]);
 }
 
@@ -434,30 +420,17 @@ void generarVecino(const Instancia& inst,vector<vector<string>>& sol, mt19937& r
 
 void SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,double temperaturaMinima,double temperaturaActual,double alpha,int semilla)
 {
-    // Parsear L2 y L3 una sola vez
     auto FS2 = parsearL2strings(inst);
     auto FS3 = parsearL3strings(inst);
-
-    // RNG para SA
     random_device rd;
     mt19937 rng(semilla);
     uniform_real_distribution<double> dist01(0.0, 1.0);
-
-    // Evaluar solución inicial
     double calidadSolucion = funcionEvaluacion(solucion, inst, FS2, FS3);
-
-    // Mejor solución encontrada
     vector<vector<string>> mejorSolucion = solucion;
     double mejorValor = calidadSolucion;
-
-    int iterPorTemp = 1000; // puedes ajustar este parámetro
-
-    // Bucle principal de SA
+    int iterPorTemp = 1000;
     while (temperaturaActual > temperaturaMinima) {
-
         for (int it = 0; it < iterPorTemp; ++it) {
-
-            // Generar vecino a partir de la solución ACTUAL
             vector<vector<string>> vecinoSolucion = solucion;
             generarVecino(inst, vecinoSolucion, rng);
 
@@ -465,17 +438,14 @@ void SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,double 
             double delta = evaluacionVecino - calidadSolucion; // minimización
 
             if (delta < 0) {
-                // Vecino mejor: lo aceptamos siempre
                 solucion = vecinoSolucion;
                 calidadSolucion = evaluacionVecino;
 
-                // Actualizamos mejor global
                 if (evaluacionVecino < mejorValor) {
                     mejorValor = evaluacionVecino;
                     mejorSolucion = vecinoSolucion;
                 }
             } else {
-                // Vecino peor: aceptamos con probabilidad exp(-delta/T)
                 double u = dist01(rng);
                 double prob = exp(-delta / temperaturaActual);
 
@@ -486,23 +456,17 @@ void SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,double 
             }
         }
 
-        // Enfriar temperatura
         temperaturaActual = funcionEnfriamiento(alpha, temperaturaActual);
-    }
-
-    // Devolver mejor solución encontrada
+    } 
     solucion = mejorSolucion;
     cout << "Mejor valor encontrado por SA: " << mejorValor << "\n";
 }
 
 
-int contarFinesDeSemanaLibres(const vector<vector<string>>& sol,
-                              const Instancia& inst)
+int contarFinesDeSemanaLibres(const vector<vector<string>>& sol,const Instancia& inst)
 {
     int N = inst.N;
     int W = inst.W;
-
-    // índices de sábado y domingo (igual que en la FO)
     int dSab, dDom;
     if (W >= 7) {
         dSab = 5;
@@ -570,7 +534,7 @@ void escribirSalida(const vector<vector<string>>& solucion,const Instancia& inst
              << rutaSalida << "\n";
         return;
     }
-    
+
     int N = inst.N;
     int W = inst.W;
 
