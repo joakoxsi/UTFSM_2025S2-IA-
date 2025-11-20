@@ -431,7 +431,7 @@ void generarVecino(const Instancia& inst,vector<vector<string>>& sol, mt19937& r
 
 
 
-double SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,double temperaturaMinima,double temperaturaActual,double alpha,int semilla,long long& numIteraciones)
+void SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,double temperaturaMinima,double temperaturaActual,double alpha,int semilla)
 {
     auto FS2 = parsearL2strings(inst);
     auto FS3 = parsearL3strings(inst);
@@ -441,15 +441,13 @@ double SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,doubl
     double calidadSolucion = funcionEvaluacion(solucion, inst, FS2, FS3);
     vector<vector<string>> mejorSolucion = solucion;
     double mejorValor = calidadSolucion;
-    numIteraciones = 0;  
-    int iterPorTemp = 100000000;
+    int iterPorTemp = 1000;
     while (temperaturaActual > temperaturaMinima) {
         for (int it = 0; it < iterPorTemp; ++it) {
             vector<vector<string>> vecinoSolucion = solucion;
             generarVecino(inst, vecinoSolucion, rng);
 
             double evaluacionVecino = funcionEvaluacion(vecinoSolucion, inst, FS2, FS3);
-            numIteraciones++; 
             double delta = evaluacionVecino - calidadSolucion; // minimización
 
             if (delta < 0) {
@@ -474,8 +472,7 @@ double SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,doubl
         temperaturaActual = funcionEnfriamiento(alpha, temperaturaActual);
     } 
     solucion = mejorSolucion;
-    //cout << "Mejor valor encontrado por SA: " << mejorValor << "\n";
-    return mejorValor; 
+    cout << "Mejor valor encontrado por SA: " << mejorValor << "\n";
 }
 
 
@@ -569,134 +566,43 @@ void escribirSalida(const vector<vector<string>>& solucion,const Instancia& inst
     cout << "Archivo de salida generado en: " << rutaSalida << "\n";
 }
 
-int main() {
-    // 1) Leer parámetros de SA desde archivo
-    vector<ParamSA> configs;
-    {
-        ifstream f("parametros.txt");
-        if (!f.is_open()) {
-            cerr << "ERROR: no se pudo abrir parametros.txt\n";
-            return 1;
-        }
 
-        double alpha, tMin, tIni;
-        unsigned int seed;
 
-        // Cada línea: alpha  tempMin  tempInicial  semilla
-        while (f >> alpha >> tMin >> tIni >> seed) {
-            configs.push_back(ParamSA{alpha, tMin, tIni, seed});
-        }
 
-        if (configs.empty()) {
-            cerr << "ERROR: parametros.txt está vacío o mal formateado\n";
-            return 1;
-        }
+int main(){
+
+
+    double alpha = 0.1;
+    double temperaturaMinima= 0;
+    double temperaturaActual = 100;
+
+    unsigned int semilla = 115;
+
+
+    cout << "Hello Word" << " \n";
+    fs::path ruta="./Instancias/N10/N10-10.txt";
+    try{
+        Instancia instancia = cargaInstancia(ruta.string());  
+
+        // Repesentacion NxW
+        vector<vector<string>> solucion;
+
+        SolucionInicial(instancia,solucion);
+        
+        mostrarSolucion(solucion,instancia);
+
+        SimulatedAnneling(instancia,solucion,temperaturaMinima,temperaturaActual,alpha,semilla);
+
+        mostrarSolucion(solucion,instancia);
+
+        escribirSalida(solucion, instancia, ruta.string(), semilla);
+        
+
+    }
+    catch (exception& e) {
+        cerr << "Error fatal al cargar la instancia: " << e.what() << endl;
     }
 
-    // 2) Recorrer todas las instancias dentro de la carpeta "Instancias"
-    vector<fs::path> rutasInstancias;
-    fs::path raizInstancias = "Instancias";
-
-    try {
-        if (!fs::exists(raizInstancias)) {
-            cerr << "ERROR: no existe la carpeta 'Instancias'\n";
-            return 1;
-        }
-
-        // SOLO archivos directamente en Instancias (sin subcarpetas)
-        for (const auto& entry : fs::directory_iterator(raizInstancias)) {
-            if (!entry.is_regular_file()) continue;
-            if (entry.path().extension() != ".txt") continue;  // solo .txt
-
-            rutasInstancias.push_back(entry.path());
-        }
-
-        if (rutasInstancias.empty()) {
-            cerr << "ERROR: no se encontraron archivos .txt en 'Instancias'\n";
-            return 1;
-        }
-    } catch (const std::exception& e) {
-        cerr << "Error recorriendo carpeta Instancias: " << e.what() << "\n";
-        return 1;
-    }
-
-    // 2.5) Preparar archivo de métricas
-    fs::path rutaMetricas = "metricas.csv";
-    bool archivoNuevo = !fs::exists(rutaMetricas);
-
-    ofstream met(rutaMetricas, ios::app);
-    if (!met.is_open()) {
-        cerr << "ERROR: no se pudo abrir metricas.csv para escritura\n";
-        return 1;
-    }
-
-    // Escribir encabezado solo si el archivo no existía
-    if (archivoNuevo) {
-        met << "instancia,alpha,tempMin,tempInicial,semilla,"
-            "fo_inicial,fo_final,fines_semana_libres,iteraciones_sa\n";
-    }
-
-    // 3) Ejecutar para cada combinación (parámetros, instancia)
-    for (const auto& cfg : configs) {
-        cout << "\n=== Ejecutando configuración "
-             << "(alpha=" << cfg.alpha
-             << ", Tmin=" << cfg.tempMin
-             << ", Tini=" << cfg.tempInicial
-             << ", seed=" << cfg.semilla << ") ===\n";
-
-        for (const auto& ruta : rutasInstancias) {
-            cout << "\n--- Instancia: " << ruta.string() << " ---\n";
-
-            try {
-                // Cargar instancia
-                Instancia instancia = cargaInstancia(ruta.string());
-
-                // Construir solución inicial greedy
-                vector<vector<string>> solucion;
-                SolucionInicial(instancia, solucion);
-
-                // Evaluar solución inicial (para métricas)
-                auto FS2 = parsearL2strings(instancia);
-                auto FS3 = parsearL3strings(instancia);
-                double foInicial = funcionEvaluacion(solucion, instancia, FS2, FS3);
-                long long iteracionesSA = 0;
-                // Ejecutar SA con esta configuración
-                SimulatedAnneling(instancia,
-                                  solucion,
-                                  cfg.tempMin,
-                                  cfg.tempInicial,
-                                  cfg.alpha,
-                                  cfg.semilla,
-                                  iteracionesSA);
-
-                // Evaluar solución final
-                double foFinal = funcionEvaluacion(solucion, instancia, FS2, FS3);
-                int finesLibres = contarFinesDeSemanaLibres(solucion, instancia);
-
-                // Escribir salida: <nombre_instancia>_<seed>.txt en /Resultados
-                escribirSalida(solucion,
-                               instancia,
-                               ruta.string(),
-                               cfg.semilla);
-
-                // Guardar métricas en CSV
-                met << ruta.filename().string() << ","
-                    << cfg.alpha << ","
-                    << cfg.tempMin << ","
-                    << cfg.tempInicial << ","
-                    << cfg.semilla << ","
-                    << foInicial << ","
-                    << foFinal << ","
-                    << finesLibres << ","
-                    << iteracionesSA << "\n";
-
-            } catch (const std::exception& e) {
-                cerr << "Error procesando instancia " << ruta
-                     << ": " << e.what() << "\n";
-            }
-        }
-    }
-
-    met.close();
+    // AHora se va a construir una se va a contruir la representacion
     return 0;
 }
