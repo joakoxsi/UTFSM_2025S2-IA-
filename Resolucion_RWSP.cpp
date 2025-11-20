@@ -352,12 +352,12 @@ double funcionEvaluacion(
     // -----------------------------
     double fo = 0.0;
     fo += penWeekend;
-    fo += penCobertura;
+    fo += 2*penCobertura;
     fo += penBloqueTrabajo;
     fo += penBloqueLibre;
-    fo += penBloqueTurno;
-    fo += penL2;
-    fo += penL3;
+    fo += 4 * penBloqueTurno;
+    fo += 2* penL2;
+    fo += 3* penL3;
 
     return fo;
 }
@@ -442,7 +442,7 @@ double SimulatedAnneling( Instancia inst, vector<vector<string>>& solucion,doubl
     vector<vector<string>> mejorSolucion = solucion;
     double mejorValor = calidadSolucion;
     numIteraciones = 0;  
-    int iterPorTemp = 100000000;
+    int iterPorTemp = 10000;
     while (temperaturaActual > temperaturaMinima) {
         for (int it = 0; it < iterPorTemp; ++it) {
             vector<vector<string>> vecinoSolucion = solucion;

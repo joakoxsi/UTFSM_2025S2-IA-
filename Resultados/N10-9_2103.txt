@@ -1,0 +1,11 @@
+1
+D D D D - - N
+D - - - A A D
+- - D D D D -
+- D D N D - -
+A D - - D A A
+A D A - A N D
+D A D D D D -
+N N N A - D D
+- A A A - D D
+D - - D N - A
